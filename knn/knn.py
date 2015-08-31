@@ -34,7 +34,6 @@ class Knearest:
     def __init__(self, x, y, k=5):
         """
         Creates a kNN instance
-
         :param x: Training data input
         :param y: Training data output
         :param k: The number of nearest points to consider in classification
@@ -52,7 +51,6 @@ class Knearest:
         """
         Given the indices of training examples, return the majority label.  If
         there's a tie, return the median value (as implemented in numpy).
-
         :param item_indices: The indices of the k nearest neighbors
         """
         assert len(item_indices) == self._k, "Did not get k inputs"
@@ -62,12 +60,14 @@ class Knearest:
         #
         # http://docs.scipy.org/doc/numpy/reference/generated/numpy.median.html
 
-        return self._y[item_indices[0]]
+        major = [x[0] for x in Counter(self._y[item_indices]).most_common() #list checks x[i] with x[i+1] 
+                    if x[1] == max(Counter(self._y[item_indices]).values())]
+
+        return median(major)
 
     def classify(self, example):
         """
         Given an example, classify the example.
-
         :param example: A representation of an example in the same
         format as training data
         """
@@ -75,8 +75,8 @@ class Knearest:
         # Finish this function to find the k closest points, query the
         # majority function, and return the value.
 
-        return self.majority(list(random.randint(0, len(self._y)) \
-                                  for x in xrange(self._k)))
+        point = self._kdtree.query(example, self._k) # query(X[, k, return_distance, dualtree, ...]) // Queries the tree for K nearest neighbours
+        return self.majority(point)
 
     def confusion_matrix(self, test_x, test_y):
         """
@@ -84,7 +84,6 @@ class Knearest:
         matrixfor the current classifier.  Should return a dictionary of
         dictionaries where d[ii][jj] is the number of times an example
         with true label ii was labeled as jj.
-
         :param test_x: Test data representation
         :param test_y: Test data answers
         """
@@ -96,6 +95,7 @@ class Knearest:
         d = defaultdict(dict)
         data_index = 0
         for xx, yy in zip(test_x, test_y):
+            d[yy][self.classify(xx)] += 1
             data_index += 1
             if data_index % 100 == 0:
                 print("%i/%i for confusion matrix" % (data_index, len(test_x)))
