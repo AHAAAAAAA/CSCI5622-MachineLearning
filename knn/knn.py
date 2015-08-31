@@ -59,8 +59,8 @@ class Knearest:
         # these indices
         #
         # http://docs.scipy.org/doc/numpy/reference/generated/numpy.median.html
-
-        major = [x[0] for x in Counter(self._y[item_indices]).most_common() #list checks x[i] with x[i+1] 
+        # Goes through list comparing xi with xi+1
+        major = [x[0] for x in Counter(self._y[item_indices]).most_common() 
                     if x[1] == max(Counter(self._y[item_indices]).values())]
 
         return median(major)
@@ -75,8 +75,9 @@ class Knearest:
         # Finish this function to find the k closest points, query the
         # majority function, and return the value.
 
-        point = self._kdtree.query(example, self._k) # query(X[, k, return_distance, dualtree, ...]) // Queries the tree for K nearest neighbours
-        return self.majority(point)
+        _, point = self._kdtree.query(example, self._k) #query(X[, k, return_distance, dualtree, ...])  query the tree for the k nearest neighbors
+
+        return self.majority(point.flatten()) #flatten multidimensional arrays into 1D
 
     def confusion_matrix(self, test_x, test_y):
         """
@@ -95,10 +96,14 @@ class Knearest:
         d = defaultdict(dict)
         data_index = 0
         for xx, yy in zip(test_x, test_y):
-            d[yy][self.classify(xx)] += 1
+            try:
+                d[yy][self.classify(xx)] += 1
+            except KeyError:
+                d[yy][self.classify(xx)] = 1
             data_index += 1
             if data_index % 100 == 0:
                 print("%i/%i for confusion matrix" % (data_index, len(test_x)))
+
         return d
 
     @staticmethod
