@@ -1,5 +1,5 @@
 import random
-from numpy import zeros, sign
+from numpy import zeros, sign, power, argsort, abs
 from math import exp, log
 from collections import defaultdict
 
@@ -100,8 +100,52 @@ class LogReg:
 
         # TODO: Implement updates in this function
 
+        # Get only nonzero values from the train_example and 
+        idx = train_example.nonzero.keys()
+        idx.append(0)
+
+        # Cleaner syntax is cuter, if only Python did pointers :(
+        x    =  train_example.x
+        y    =  train_example.y
+        beta =  self.beta[idx]
+        step =  self.step(iteration)
+
+        
+        # Formula (without regularization) is beta+(iteration*(y-(exp(beta.x)/(1+exp(beta.x))))*x)
+        # Sources: Lecture notes  & http://blog.datumbox.com/machine-learning-tutorial-the-multinomial-logistic-regression-softmax-regression/
+        ebiasx = exp(beta.dot(x[idx]))
+        p      = ebiasx/(1+ebiasx)
+        update = beta + (step * (y - p) * x[idx])
+
+        #Regularize
+        for i in range(0, len(self.beta)):
+            self.last_update[i] += 1
+        regular        = power(1 - (2 * step * self.mu), self.last_update.values())
+        self.beta[idx] = update * regular[idx]
+
+        #Cleanup, things were breaking in the tests so..
+        for i in idx:
+            self.last_update[i]=0
+
         return self.beta
 
+    def goodbbwords(self):
+        return argsort(self.beta)[-10:]
+    def goodhwords(self):
+        return argsort(self.beta)[:10]
+    def badwords(self):
+        return argsort(abs(self.beta))[:10] #Getting the zeros
+
+def results(lr):
+    print "Baseball: "
+    baseball = lr.goodbbwords()
+    print([vocab[i] for i in baseball])
+    print "Hockey: "
+    hockey = lr.goodhwords()
+    print([vocab[i] for i in hockey])
+    print "Worst: "
+    bad = lr.badwords()
+    print([vocab[i] for i in bad])
 
 def read_dataset(positive, negative, vocab, test_proportion=.1):
     """
@@ -136,7 +180,11 @@ def read_dataset(positive, negative, vocab, test_proportion=.1):
 def step_update(iteration):
     # TODO (extra credit): Update this function to provide an
     # effective iteration dependent step size
+
+    # class note: if it goes down over time, results should get better..
+    # Result get worse somehow, abort!
     return 1.0
+
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
@@ -158,9 +206,8 @@ if __name__ == "__main__":
 
     print("Read in %i train and %i test" % (len(train), len(test)))
 
-    # Initialize model
+    # Initialize Model
     lr = LogReg(len(vocab), args.mu, lambda x: args.step)
-
     # Iterations
     update_number = 0
     for pp in xrange(args.passes):
@@ -173,3 +220,4 @@ if __name__ == "__main__":
                 ho_lp, ho_acc = lr.progress(test)
                 print("Update %i\tTP %f\tHP %f\tTA %f\tHA %f" %
                       (update_number, train_lp, ho_lp, train_acc, ho_acc))
+#print results(lr)
