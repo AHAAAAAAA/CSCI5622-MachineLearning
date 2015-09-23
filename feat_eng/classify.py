@@ -1,18 +1,44 @@
 from csv import DictReader, DictWriter
 
 import numpy as np
+import re
 from numpy import array
 
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import SGDClassifier
+import nltk
+# nltk.download()
+from nltk import word_tokenize
+from nltk.stem import WordNetLemmatizer
 
 kTARGET_FIELD = 'spoiler'
 kTEXT_FIELD = 'sentence'
 
+#Online implementation found
+class LemmaTokenizer(object):
+    def __init__(self):
+        self.wnl = WordNetLemmatizer()
+    def __call__(self, doc):
+        return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
+def removepunc(text):
+    punctuation = re.compile(r'[,.?!\':\)\(`";|0-9]')
+    text = punctuation.sub('', text)
+    return text
 
 class Featurizer:
     def __init__(self):
-        self.vectorizer = CountVectorizer()
+        self.vectorizer = TfidfVectorizer(
+          analyzer = 'word',
+          max_df=0.5,
+          preprocessor = removepunc,
+          ngram_range=(1,3),
+          stop_words = 'english',
+          strip_accents = 'ascii',
+          tokenizer = LemmaTokenizer(),
+          sublinear_tf=True,
+          smooth_idf=True
+          )
 
     def train_feature(self, examples):
         return self.vectorizer.fit_transform(examples)
@@ -35,8 +61,8 @@ class Featurizer:
 if __name__ == "__main__":
 
     # Cast to list to keep it all in memory
-    train = list(DictReader(open("../data/spoilers/train.csv", 'r')))
-    test = list(DictReader(open("../data/spoilers/test.csv", 'r')))
+    train = list(DictReader(open("../data/spoilers/train3.csv", 'r')))
+    test = list(DictReader(open("../data/spoilers/test3.csv", 'r')))
 
     feat = Featurizer()
 
@@ -62,8 +88,8 @@ if __name__ == "__main__":
     feat.show_top10(lr, labels)
 
     predictions = lr.predict(x_test)
-    o = DictWriter(open("predictions.csv", 'w'), ["id", "cat"])
+    o = DictWriter(open("predictions.csv", 'w'), ["id", "spoiler"])
     o.writeheader()
     for ii, pp in zip([x['id'] for x in test], predictions):
-        d = {'id': ii, 'cat': labels[pp]}
+        d = {'id': ii, 'spoiler': labels[pp]}
         o.writerow(d)
