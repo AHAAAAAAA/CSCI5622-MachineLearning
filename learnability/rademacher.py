@@ -1,10 +1,9 @@
 from random import randint, seed
 from collections import defaultdict
-from math import atan, sin, cos, pi
-
+from math import atan, sin, cos, tan, acos, hypot, pi
 from numpy import array
 from numpy.linalg import norm
-
+from itertools import combinations
 from bst import BST
 
 kSIMPLE_DATA = [(1., 1.), (2., 2.), (3., 0.), (4., 2.)]
@@ -26,9 +25,18 @@ class Classifier:
             (len(data), len(labels))
 
         assert all(x == 1 or x == -1 for x in labels), "Labels must be binary"
-
-        # TODO: implement this function
-        return 0.0
+        # DONE
+        sum   = 0.0
+        j     = 0
+        for i in data:
+            if(self.classify(i)):
+                a = 1.0 
+            else:
+                a = -1.0
+            sum += float(labels[j]) * a
+            j +=1
+        datasize = float(len(data))
+        return (sum/datasize)
 
 
 class PlaneHypothesis(Classifier):
@@ -152,10 +160,43 @@ def origin_plane_hypotheses(dataset):
       dataset: The dataset to use to generate hypotheses
 
     """
+    # DONE
+    tt = list() #Make list of thetas
+    for ii in dataset:
+        if norm not in tt: #If it's not in the thetas set, then we append it to it damn it
+            if ii[0] == 0:
+                tt.append(0.00001)
+            else:
+                tt.append(atan(ii[1]/ii[0]))
+    tt.sort() #get all the closest thetas next to each other
 
-    # TODO: Complete this function
+    theta = tt[0]
+    y = tan(theta)
+    hp = OriginPlaneHypothesis(1, y)
+    hn = OriginPlaneHypothesis(-1,-y)
+    classified = list()
+    planed = list()
+    classified.append([hp.classify(x) for x in dataset]), classified.append([hn.classify(x) for x in dataset])
+    planed.append(hp), planed.append(hn)
 
-    yield OriginPlaneHypothesis(1.0, 0.0)
+    for i in range(len(tt)-1):
+        theta = (tt[i]+tt[i+1])/2 + pi/2 #bisect the 2 thetas nearest each other
+        hp = OriginPlaneHypothesis(1, tan(theta)) # +1 decision boundaries
+        hn  = OriginPlaneHypothesis(-1, -tan(theta)) # -1 decision boundaries
+
+        for d in dataset: #classify the data based on the computed boundaries
+            p = [hp.classify(d)] #get i
+            n = [hn.classify(d)]
+
+        if (p not in classified): #if it's not already classified, add it and yield hp and hn
+            classified.append(p)
+            planed.append(hp)
+
+        if (n not in classified):
+            classified.append(n)
+            planed.append(hn)
+
+    return planed
 
 def plane_hypotheses(dataset):
     """
@@ -185,9 +226,32 @@ def axis_aligned_hypotheses(dataset):
     Args:
       dataset: The dataset to use to generate hypotheses
     """
+    # DONE
+    # Empty rectangle first classifier
+    empty =  AxisAlignedRectangle(0.0, 0.0, 0.0, 0.0)
+    classified =  list()
+    classified.append([empty.classify(d) for d in dataset])
 
-    # TODO: complete this function
-    yield AxisAlignedRectangle(0, 0, 0, 0)
+    # Add all rectangles containing just one point aka squares
+    squares = list()
+    for ii in dataset:
+        squares.append(AxisAlignedRectangle(ii[0],ii[1],ii[0],ii[1]))
+
+    for x in range(1,len(dataset)):
+        combos = combinations(dataset,x) #create tuple of combos of data and n
+        for ii in combos:
+            x = []
+            y = []
+            for i in ii:
+                x.append(i[0])
+                y.append(i[1]) 
+            #creates rectangle with lower bound of minimum values of x and y, upper bound with the largest xs and ys 
+            rectangle = AxisAlignedRectangle(min(x),min(y),max(x),max(y))
+            for ii in dataset:
+                rectangle.classify(ii)
+            if rectangle not in squares:
+                squares.append(rectangle)
+    return squares
 
 
 def coin_tosses(number, random_seed=0):
@@ -220,9 +284,18 @@ def rademacher_estimate(dataset, hypothesis_generator, num_samples=500,
       num_samples: the number of samples to use in estimating the Rademacher
       correlation
     """
+    # DONE
+    hypotheses = list(hypothesis_generator(dataset))
+    sums=[]
+    for ii in range(num_samples):
+        if ii == 0:
+            sigma = coin_tosses(len(dataset),random_seed)
+        else:
+            sigma = coin_tosses(len(dataset))
+        sums.append(max([hypothesis.correlation(dataset, sigma) for hypothesis in hypotheses]))
+    sums = sum(sums)
+    return sums/num_samples
 
-    # TODO: complete this function
-    return 0.0
 
 if __name__ == "__main__":
     print("Rademacher correlation of constant classifier %f" %
