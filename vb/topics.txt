@@ -1,0 +1,50 @@
+==========	0	==========
+crane	1
+cardinal	6.99871e-144
+pope	0
+bulldozer	0
+==========	1	==========
+cardinal	1
+pope	0
+bulldozer	0
+crane	0
+==========	2	==========
+crane	1
+cardinal	8.37863e-144
+pope	0
+bulldozer	0
+==========	3	==========
+crane	0.68138
+bulldozer	0.31862
+pope	0
+cardinal	0
+==========	4	==========
+crane	0.653673
+bulldozer	0.346327
+pope	0
+cardinal	0
+==========	5	==========
+pope	0.500187
+cardinal	0.499813
+bulldozer	0
+crane	0
+==========	6	==========
+crane	1
+cardinal	1.20173e-143
+pope	0
+bulldozer	0
+==========	7	==========
+crane	0.652404
+bulldozer	0.347596
+pope	0
+cardinal	0
+==========	8	==========
+crane	1
+pope	0
+bulldozer	0
+cardinal	0
+==========	9	==========
+crane	0.693572
+bulldozer	0.306428
+pope	0
+cardinal	0

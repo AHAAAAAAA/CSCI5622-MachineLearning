@@ -103,8 +103,18 @@ class VariationalBayes:
         given count
         """
 
-        # TODO: Complete this function!
-        return ones(len(gamma)) / float(len(gamma))
+        # TODO: Complete this function
+        phi = (beta[:,word] * exp(digam(gamma)))
+        return  phi * (count / sum(phi))
+
+    #Extra Credit
+    def update_alpha(self, gamma=None, alpha=None):
+        if alpha is None:
+            alpha = self._alpha
+    	if gamma is None:
+    		gamma = self._gamma
+        talpha = alpha
+    	return talpha
 
     def e_step(self, local_parameter_iteration=50):
         """
@@ -168,7 +178,8 @@ class VariationalBayes:
         """
 
         # TODO: Finish this function!
-        self._beta = self._beta
+        self._beta = topic_counts / (numpy.sum(topic_counts, axis=1)[:, numpy.newaxis])
+        return self._beta
 
     def run_iteration(self, local_iter):
         """
@@ -183,7 +194,8 @@ class VariationalBayes:
         clock_e_step = time.time() - clock_e_step
 
         clock_m_step = time.time()
-        self.m_step(topic_counts)
+        self._beta = self.m_step(topic_counts)
+        self._alpha = self.update_alpha() #Extra Credit
 
         clock_m_step = time.time() - clock_m_step
 
@@ -225,7 +237,7 @@ if __name__ == "__main__":
     argparser.add_argument("--alpha", help="Alpha hyperparameter",
                            type=float, default=0.1, required=False)
     argparser.add_argument("--iterations", help="Number of outer iterations",
-                           type=int, default=10, required=False)
+                           type=int, default=1000, required=False)
     argparser.add_argument("--inner_iter", help="Number of inner iterations",
                            type=int, default=5, required=False)
     argparser.add_argument("--topics_out", help="Where we write topics",
